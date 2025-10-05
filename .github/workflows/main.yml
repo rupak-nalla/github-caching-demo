@@ -1,8 +1,5 @@
-# .github/workflows/cache-workflow.yml
-
 name: Demonstrate Dependency Caching
 
-# This action runs on push to the main branch or can be triggered manually
 on:
   push:
     branches: [ "main" ]
@@ -15,34 +12,33 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      # --- This is the main caching step ---
+      # This step attempts to restore a cache with the specific key
       - name: Cache dependencies
-        id: cache-step # We give this step an ID to reference its output later
+        id: cache-step # An ID is needed to reference the output of this step
         uses: actions/cache@v4
         with:
-          # The path to the folder or file we want to cache.
-          # We will create this file in the next step if the cache is missed.
+          # Define the file/folder to cache
           path: dummy_dependencies
           # The exact key required by the prompt
           key: cache-fa01e5b
 
-      # --- This step runs ONLY if the cache was not found ---
-      # It "primes the cache" by creating the content that will be stored.
-      - name: Create dependency file (if cache missed)
+      # This step runs ONLY if the cache was not found in the previous step
+      - name: Create dependency file if cache missed
         if: steps.cache-step.outputs.cache-hit != 'true'
         run: |
-          echo "Cache not found. Creating dummy dependency file now..."
-          echo "This content was generated during the initial run." > dummy_dependencies
+          echo "Cache not found. Priming cache by creating a dummy file."
+          echo "This content was generated on the first run." > dummy_dependencies
 
       # --- THIS IS THE REQUIRED VERIFICATION STEP ---
-      # It has the required name and echoes the cache hit/miss status.
+      # It has the correct name and echoes the cache hit/miss status.
+      # The 'run' command is now in a literal block to avoid syntax errors.
       - name: prime-cache-fa01e5b
-        run: echo "The cache hit status was: ${{ steps.cache-step.outputs.cache-hit }}"
-
-      # Optional step to prove the file exists
-      - name: Verify file content
         run: |
-          echo "---"
-          echo "Content of the dummy_dependencies file:"
+          echo "The cache hit status was: ${{ steps.cache-step.outputs.cache-hit }}"
+
+      # This is an optional step to prove the cached file exists and has content
+      - name: Verify content of cached file
+        run: |
+          echo "--- Verifying file content ---"
           cat dummy_dependencies
-          echo "---"
+          echo "----------------------------"
